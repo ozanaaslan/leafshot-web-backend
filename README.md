@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="img.png" alt="LeafShot Preview" width="160">
+  <img src="src/main/resources/LeafShot.png" alt="LeafShot Preview" width="160">
 </p>
 <h3 align="center">LeafShot Web</h3>
 
@@ -22,7 +22,7 @@ It's the back-bone of the LeafShotSwingUI client in terms of hosting and sharing
 ## Quick Start
 
 ### Prerequisites
-- Java 8 or higher
+- Java 17 or higher
 - Maven
 
 ### Installation
