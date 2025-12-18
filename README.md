@@ -76,6 +76,3 @@ String link = client.uploadImage(bufferedImage);
 System.out.println("Image uploaded to: " + link);
 ```
 
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
