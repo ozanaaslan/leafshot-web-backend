@@ -76,7 +76,7 @@ public class ImageController {
 
         Manifest manifest = service.loadManifest(id);
         if (manifest == null) return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new JSONObject().put("message", "Resource not found").toString());
-        return ResponseEntity.ok(new JSONObject(manifest.toJSON().toString()).put("message", "resource found!").toString());
+        return ResponseEntity.ok(new JSONObject(manifest.toJSON().remove("uploaderIp").toString()).put("message", "resource found!").toString());
     }
 
 
