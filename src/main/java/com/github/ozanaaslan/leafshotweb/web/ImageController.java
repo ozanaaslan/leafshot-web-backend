@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.imageio.ImageIO;
+import javax.servlet.http.HttpServletRequest;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -54,13 +55,21 @@ public class ImageController {
         return data.count.incrementAndGet() > properties.getRateLimit().getRequestsPerMinute();
     }
 
-    @GetMapping("/manifest")
-    public ResponseEntity<String> getManifest(@RequestParam String id,
-                                              @RequestHeader(value = "X-Forwarded-For", required = false) String forwardIp,
-                                              @RequestHeader(value = "Remote-Addr", required = false) String remoteAddr) {
-        String ip = forwardIp != null ? forwardIp : remoteAddr;
-        if (isRateLimited(ip)) return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(new JSONObject().put("error", "Rate limit exceeded").toString());
+    private String getClientIp(String forwardedFor, HttpServletRequest request) {
+        if (forwardedFor != null && !forwardedFor.isBlank()) {
+            // X-Forwarded-For may contain multiple IPs
+            return forwardedFor.split(",")[0].trim();
+        }
+        return request.getRemoteAddr(); // always non-null
+    }
 
+    @GetMapping("/manifest")
+    public ResponseEntity<String> getManifest(  @RequestParam String id,
+                                                @RequestHeader(value = "X-Forwarded-For", required = false) String forwardIp,
+                                                HttpServletRequest request) {
+        if (isRateLimited(getClientIp(forwardIp, request)))
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                    .body(new JSONObject().put("error", "Rate limit exceeded").toString());
         if (id == null || !id.matches("^[a-zA-Z0-9]+$")) {
             return ResponseEntity.badRequest().body(new JSONObject().put("error", "Invalid ID").toString());
         }
@@ -70,12 +79,15 @@ public class ImageController {
         return ResponseEntity.ok(new JSONObject(manifest.toJSON().toString()).put("message", "resource found!").toString());
     }
 
+
+
     @GetMapping(value = "/image", produces = MediaType.IMAGE_PNG_VALUE)
     public ResponseEntity<byte[]> getImage(@RequestParam String id,
                                            @RequestHeader(value = "X-Forwarded-For", required = false) String forwardIp,
-                                           @RequestHeader(value = "Remote-Addr", required = false) String remoteAddr) {
-        String ip = forwardIp != null ? forwardIp : remoteAddr;
-        if (isRateLimited(ip)) return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).build();
+                                           HttpServletRequest request) {
+        if (isRateLimited(getClientIp(forwardIp, request)))
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                    .build();
 
         if (id == null || !id.matches("^[a-zA-Z0-9]+$")) {
             return ResponseEntity.badRequest().build();
@@ -109,11 +121,11 @@ public class ImageController {
     public ResponseEntity<String> uploadImage(
             @RequestParam(required = false) MultipartFile image,
             @RequestHeader(value = "X-Forwarded-For", required = false) String forwardIp,
-            @RequestHeader(value = "Remote-Addr", required = false) String remoteAddr) {
+            HttpServletRequest request) {
 
-        String uploaderIp = forwardIp != null ? forwardIp : remoteAddr;
-        if (isRateLimited(uploaderIp)) return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(new JSONObject().put("error", "Rate limit exceeded").toString());
-
+        if (isRateLimited(getClientIp(forwardIp, request)))
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                    .body(new JSONObject().put("error", "Rate limit exceeded").toString());
         try {
             byte[] imageData = null;
 
@@ -155,7 +167,7 @@ public class ImageController {
                     .filePath(imageFile.getAbsolutePath())
                     .mimeType("image/png")
                     .fileSize(imageData.length)
-                    .uploaderIp(uploaderIp)
+                    .uploaderIp(getClientIp(forwardIp, request))
                     .width(img.getWidth())
                     .height(img.getHeight())
                     .build();
@@ -171,9 +183,10 @@ public class ImageController {
     @PatchMapping("/report")
     public ResponseEntity<String> report(@RequestParam String id,
                                          @RequestHeader(value = "X-Forwarded-For", required = false) String forwardIp,
-                                         @RequestHeader(value = "Remote-Addr", required = false) String remoteAddr) {
-        String ip = forwardIp != null ? forwardIp : remoteAddr;
-        if (isRateLimited(ip)) return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(new JSONObject().put("error", "Rate limit exceeded").toString());
+                                         HttpServletRequest request) {
+        if (isRateLimited(getClientIp(forwardIp, request)))
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                    .body(new JSONObject().put("error", "Rate limit exceeded").toString());
 
         if (id == null || !id.matches("^[a-zA-Z0-9]+$")) {
             return ResponseEntity.badRequest().body(new JSONObject().put("error", "Invalid ID").toString());
