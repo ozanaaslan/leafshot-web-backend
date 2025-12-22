@@ -35,8 +35,8 @@ LeafShot Web is a server-side application designed for temporary image hosting. 
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/ozanaaslan/leafshot-webmin.git
-   cd leafshot-webmin
+   git clone https://github.com/ozanaaslan/leafshot-web-backend.git
+   cd leafshot-web-backend
    ```
 
 2. **Build the application**:
