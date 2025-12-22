@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  leafshot:
+    build: .
+    image: leafshot-webmin:latest
+    ports:
+      - "${SERVER_PORT:-8091}:${SERVER_PORT:-8091}"
+    env_file:
+      - .env
+    volumes:
+      - ./data:/app/data
+      - ./workdir:/app/workdir
+    restart: unless-stopped

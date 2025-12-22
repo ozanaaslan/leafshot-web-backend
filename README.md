@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="src/main/resources/LeafShot.png" alt="LeafShot Preview" width="160">
+  <img src="docs/assets/LeafShot.png" alt="LeafShot Preview" width="160">
 </p>
 <h3 align="center">LeafShot Web</h3>
 
@@ -31,6 +31,8 @@ LeafShot Web is a server-side application designed for temporary image hosting. 
 
 ## Installation and Execution
 
+### Manual Execution
+
 1. **Clone the repository**:
    ```bash
    git clone https://github.com/ozanaaslan/leafshot-webmin.git
@@ -48,6 +50,21 @@ LeafShot Web is a server-side application designed for temporary image hosting. 
    ```
 
 The server listens on port `8091` by default.
+
+### Docker Execution
+
+1. **Setup environment variables**:
+   ```bash
+   cp .env.example .env
+   ```
+   Edit `.env` to configure your server settings.
+
+2. **Build and start the container**:
+   ```bash
+   docker-compose up -d --build
+   ```
+
+The application will be available at the port specified in your `.env` file (default `8091`). Data and images are persisted in the `./data` and `./workdir` directories on the host.
 
 ## Configuration
 
@@ -81,7 +98,7 @@ Configuration is managed via `src/main/resources/application.properties`.
 
 ## API Usage
 
-Refer to [API_REFERENCE.md](API_REFERENCE.md) for detailed endpoint documentation.
+Refer to [docs/API_REFERENCE.md](docs/API_REFERENCE.md) for detailed endpoint documentation.
 
 ### Basic Examples
 
