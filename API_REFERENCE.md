@@ -7,15 +7,14 @@ All endpoints are relative to the base URL of the LeafShot server (default port:
 ### Endpoints
 
 #### 1. Upload Image
-Uploads an image to the server and returns a unique identifier.
+Uploads an image to the server.
 
 *   **URL:** `/api/v1/image`
 *   **Method:** `POST`
+*   **Request Header:**
+    *   `X-Forwarded-For` (optional): Used to identify the client IP for rate limiting when behind a proxy.
 *   **Parameters:**
-    *   `image`: The image file data.
-*   **Request Formats:**
-    *   **Multipart:** `multipart/form-data` with a field named `image` containing the file.
-    *   **Base64 String:** Send the image as a Base64 encoded string directly as the request body. Supports both raw Base64 and Data URLs (`data:image/png;base64,...`). Set `Content-Type` to `text/plain`.
+    *   `image`: The image file data (Multipart form-data).
 *   **Success Response:**
     *   **Code:** 200 OK
     *   **Content:**
@@ -27,7 +26,7 @@ Uploads an image to the server and returns a unique identifier.
         ```
 *   **Error Responses:**
     *   **Code:** 400 Bad Request
-    *   **Content:** `{"error": "No image data"}`
+    *   **Content:** `{"error": "No image data"}`, `{"error": "Only images are allowed"}`, `{"error": "Invalid image format"}`
     *   **Code:** 429 Too Many Requests
     *   **Content:** `{"error": "Rate limit exceeded"}`
     *   **Code:** 500 Internal Server Error
@@ -36,24 +35,28 @@ Uploads an image to the server and returns a unique identifier.
 ---
 
 #### 2. Get Image
-Retrieves the image associated with the given ID. Accessing this endpoint automatically increments the view count and may prolong the resource's lifetime if configured.
+Retrieves the image associated with the given ID. Accessing this endpoint increments the view count and may prolong the resource's lifetime if configured.
 
 *   **URL:** `/api/v1/image`
 *   **Method:** `GET`
+*   **Request Header:**
+    *   `X-Forwarded-For` (optional): Used to identify the client IP for rate limiting.
 *   **Parameters:**
     *   `id`: The unique identifier of the image (e.g., `?id=A1b2C3d4`).
 *   **Success Response:**
     *   **Code:** 200 OK
     *   **Content:** Binary image data (MIME Type: `image/png`).
 *   **Error Responses:**
+    *   **Code:** 400 Bad Request
+    *   **Content:** No content (Invalid ID format)
     *   **Code:** 404 Not Found
-    *   **Content:** `{"error": "Not found"}` or `{"error": "Image file missing"}`
+    *   **Content:** No content (Image file missing)
     *   **Code:** 410 Gone
-    *   **Content:** `{"error": "Resource no longer available"}` or `{"error": "Resource expired"}`
+    *   **Content:** No content (Resource expired or deleted)
     *   **Code:** 429 Too Many Requests
-    *   **Content:** No content (empty body)
+    *   **Content:** No content
     *   **Code:** 500 Internal Server Error
-    *   **Content:** `{"error": "Internal error"}`
+    *   **Content:** No content
 
 ---
 
@@ -62,6 +65,8 @@ Retrieves the metadata (manifest) for the given resource ID.
 
 *   **URL:** `/api/v1/manifest`
 *   **Method:** `GET`
+*   **Request Header:**
+    *   `X-Forwarded-For` (optional): Used to identify the client IP for rate limiting.
 *   **Parameters:**
     *   `id`: The unique identifier of the resource (e.g., `?id=A1b2C3d4`).
 *   **Success Response:**
@@ -85,12 +90,12 @@ Retrieves the metadata (manifest) for the given resource ID.
         }
         ```
 *   **Error Responses:**
+    *   **Code:** 400 Bad Request
+    *   **Content:** `{"error": "Invalid ID"}`
     *   **Code:** 404 Not Found
     *   **Content:** `{"message": "Resource not found"}`
     *   **Code:** 429 Too Many Requests
     *   **Content:** `{"error": "Rate limit exceeded"}`
-    *   **Code:** 500 Internal Server Error
-    *   **Content:** `{"message": "something went wrong fetching the requested resource"}`
 
 ---
 
@@ -99,17 +104,19 @@ Reports a resource. Reporting increments the report count and reduces the resour
 
 *   **URL:** `/api/v1/report`
 *   **Method:** `PATCH`
+*   **Request Header:**
+    *   `X-Forwarded-For` (optional): Used to identify the client IP for rate limiting.
 *   **Parameters:**
     *   `id`: The unique identifier of the resource (e.g., `?id=A1b2C3d4`).
 *   **Success Response:**
     *   **Code:** 200 OK
     *   **Content:** `{"message": "Resource reported"}`
 *   **Error Responses:**
+    *   **Code:** 400 Bad Request
+    *   **Content:** `{"error": "Invalid ID"}`
     *   **Code:** 404 Not Found
-    *   **Content:** `{"error": "Not found"}`
-    *   **Code:** 410 Gone
-    *   **Content:** `{"error": "Resource no longer available"}`
+    *   **Content:** No content
     *   **Code:** 429 Too Many Requests
     *   **Content:** `{"error": "Rate limit exceeded"}`
     *   **Code:** 500 Internal Server Error
-    *   **Content:** `{"error": "Internal error"}`
+    *   **Content:** No content

@@ -4,75 +4,104 @@
 <h3 align="center">LeafShot Web</h3>
 
 <p align="center">
-    <strong>Capture, Annotate, Copy, and Share.</strong><br>
-    A lightweight, image hosting server built with Spring Boot. LeafShot provides a simple API for uploading, retrieving, and reporting images with automatic expiration and cleanup features.
-It's the back-bone of the LeafShotSwingUI client in terms of hosting and sharing images.
+    A lightweight image hosting server built with Spring Boot.
 </p>
+
+## Overview
+
+LeafShot Web is a server-side application designed for temporary image hosting. It provides a REST API for uploading and retrieving images, with features for automatic lifecycle management and rate limiting.
 
 ## Features
 
-- **Fast Image Uploads**: Supports multipart, raw binary, and Base64 encoded uploads.
-- **Automatic Expiration**: Resources are automatically purged after a configurable lifetime.
-- **Lifetime Management**:
-    - **Prolongation**: Resources can have their lifetime extended each time they are accessed (optional).
-    - **Reduction**: Reporting a resource reduces its remaining lifetime.
-- **Automatic Cleanup**: A background task runs hourly to delete expired or earmarked resources.
-- **Metadata Management**: Each resource has a `manifest.json` containing metadata like dimensions, file size, and view counts.
+- **Image Upload**: Supports `multipart/form-data` uploads.
+- **Image Retrieval**: Serves images in PNG format.
+- **Metadata Access**: Provides image metadata via a JSON manifest endpoint.
+- **Automatic Expiration**: Resources are automatically marked as expired after a configurable duration.
+- **Dynamic Lifetime**:
+    - **Prolongation**: Resource lifetime can be extended upon each access.
+    - **Reduction**: Reporting a resource decreases its remaining lifetime.
+- **Automated Cleanup**: A scheduled task periodically removes expired or earmarked resources from the file system and database.
+- **Rate Limiting**: Integrated request throttling based on client IP addresses.
+- **Database Integration**: Uses H2 database to persist resource metadata (manifests).
 
-## Quick Start
+## Prerequisites
 
-### Prerequisites
-- Java 17 or higher
-- Maven
+- Java 11
+- Maven 3.x
 
-### Installation
-1. Clone the repository:
+## Installation and Execution
+
+1. **Clone the repository**:
    ```bash
    git clone https://github.com/ozanaaslan/leafshot-webmin.git
    cd leafshot-webmin
    ```
-2. Build the project:
+
+2. **Build the application**:
    ```bash
    mvn clean install
    ```
-3. Run the server:
+
+3. **Run the server**:
    ```bash
    mvn spring-boot:run
    ```
 
-The server will start on port `8091` by default.
+The server listens on port `8091` by default.
 
 ## Configuration
 
-Configuration is managed via `src/main/resources/application.properties`. Key settings include:
-- `leafshot.resource.lifetime-hours`: Default lifetime for new uploads (default: 168 hours / 1 week).
-- `leafshot.resource.prolongable`: Whether access extends resource life (default: true).
-- `leafshot.reports.deletion-threshold`: Number of reports required to earmark a resource for removal.
+Configuration is managed via `src/main/resources/application.properties`.
+
+### Core Settings
+| Property | Description | Default |
+|----------|-------------|---------|
+| `server.port` | The port the server listens on. | `8091` |
+| `leafshot.working-directory` | Directory where images and data are stored. | `workdir` |
+| `leafshot.upload.max-size-mb` | Maximum allowed upload size in MB. | `100` |
+
+### Resource Management
+| Property | Description | Default |
+|----------|-------------|---------|
+| `leafshot.resource.lifetime-hours` | Initial lifetime of a resource in hours. | `168` |
+| `leafshot.resource.prolongable` | Whether accessing a resource extends its lifetime. | `true` |
+| `leafshot.resource.prolonged-hours-per-access` | Hours added per access if prolongable. | `24` |
+
+### Reporting and Removal
+| Property | Description | Default |
+|----------|-------------|---------|
+| `leafshot.reports.deletion-threshold` | Number of reports required for earmarking removal. | `5` |
+| `leafshot.reports.time-withdraw-hours` | Hours deducted from lifetime per report. | `24` |
+
+### Rate Limiting
+| Property | Description | Default |
+|----------|-------------|---------|
+| `leafshot.rate-limit.enabled` | Whether rate limiting is active. | `true` |
+| `leafshot.rate-limit.requests-per-minute` | Maximum requests allowed per minute per IP. | `10` |
 
 ## API Usage
 
-LeafShot provides a RESTful API for all operations. See the [API Reference](API_REFERENCE.md) for detailed documentation.
+Refer to [API_REFERENCE.md](API_REFERENCE.md) for detailed endpoint documentation.
 
-### Example: Uploading an Image
+### Basic Examples
+
+**Upload an Image (Multipart)**
 ```bash
 curl -X POST http://localhost:8091/api/v1/image \
-     -H "Content-Type: text/plain" \
-     --data-binary "@image_base64.txt"
+     -F "image=@path/to/your/image.png"
 ```
 
-### Example: Retrieving an Image
+**Retrieve an Image**
 ```bash
-# Simply open in your browser or use:
-curl http://localhost:8091/api/v1/image?id=A1b2C3d4
+curl http://localhost:8091/api/v1/image?id=RESOURCE_ID
 ```
 
-## Client Library
+## Client Integration
 
-The project includes a Java `UploadHandler` client for easy integration into other applications.
+A Java `UploadHandler` is available in `com.github.ozanaaslan.leafshotweb.client` for simplified server interaction.
 
 ```java
 UploadHandler client = new UploadHandler("http://localhost:8091");
-String link = client.uploadImage(bufferedImage);
-System.out.println("Image uploaded to: " + link);
+String imageUrl = client.uploadImage(bufferedImage);
 ```
 
